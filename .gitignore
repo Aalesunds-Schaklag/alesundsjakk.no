@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.env
+*.pyc
+__pycache__/
+.venv/
+*.egg-info/
+.DS_Store
+postgres-data/
+uploads/*
+!uploads/.gitkeep
+.ruff_cache/
+.pytest_cache/
+*.log
+.claude/settings.local.json
