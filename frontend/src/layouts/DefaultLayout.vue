@@ -12,15 +12,35 @@
 
     <template v-slot:append>
       <div class="d-none d-lg-flex align-center ga-1">
-        <v-btn
-          v-for="item in navItems"
-          :key="item.to"
-          :to="item.to"
-          variant="text"
-          size="small"
-        >
-          {{ t(item.label) }}
-        </v-btn>
+        <template v-for="item in navTree" :key="item.id">
+          <!-- Item with children: dropdown menu -->
+          <v-menu v-if="item.children.length" open-on-hover :close-on-content-click="true">
+            <template #activator="{ props }">
+              <v-btn v-bind="props" variant="text" size="small">
+                {{ localizedTitle(item) }}
+                <v-icon end size="x-small">mdi-chevron-down</v-icon>
+              </v-btn>
+            </template>
+            <v-list density="compact">
+              <v-list-item :to="resolveLink(item)">
+                <v-list-item-title class="font-weight-bold">{{ localizedTitle(item) }}</v-list-item-title>
+              </v-list-item>
+              <v-divider />
+              <v-list-item
+                v-for="child in item.children"
+                :key="child.id"
+                :to="resolveLink(child)"
+              >
+                <v-list-item-title>{{ localizedTitle(child) }}</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+
+          <!-- Leaf item: simple button -->
+          <v-btn v-else :to="resolveLink(item)" variant="text" size="small">
+            {{ localizedTitle(item) }}
+          </v-btn>
+        </template>
       </div>
 
       <LanguageSwitcher />
@@ -39,14 +59,49 @@
     temporary
   >
     <v-list nav>
+      <!-- Home is always first -->
       <v-list-item
-        v-for="item in allNavItems"
-        :key="item.to"
-        :to="item.to"
-        :title="t(item.label)"
-        :prepend-icon="item.icon"
+        to="/"
+        :title="t('nav.home')"
+        prepend-icon="mdi-home"
         @click="appStore.drawerOpen = false"
       />
+
+      <template v-for="item in navTree" :key="item.id">
+        <!-- Items with children: expandable group -->
+        <v-list-group v-if="item.children.length">
+          <template #activator="{ props }">
+            <v-list-item
+              v-bind="props"
+              :prepend-icon="item.icon || undefined"
+              :title="localizedTitle(item)"
+            />
+          </template>
+          <v-list-item
+            :to="resolveLink(item)"
+            :title="localizedTitle(item)"
+            prepend-icon="mdi-arrow-right"
+            @click="appStore.drawerOpen = false"
+          />
+          <v-list-item
+            v-for="child in item.children"
+            :key="child.id"
+            :to="resolveLink(child)"
+            :title="localizedTitle(child)"
+            :prepend-icon="child.icon || 'mdi-circle-small'"
+            @click="appStore.drawerOpen = false"
+          />
+        </v-list-group>
+
+        <!-- Leaf items -->
+        <v-list-item
+          v-else
+          :to="resolveLink(item)"
+          :title="localizedTitle(item)"
+          :prepend-icon="item.icon || undefined"
+          @click="appStore.drawerOpen = false"
+        />
+      </template>
     </v-list>
   </v-navigation-drawer>
 
@@ -57,32 +112,33 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores/app'
 import { useAuthStore } from '@/stores/auth'
+import type { NavItem } from '@/composables/useWagtail'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import AppFooter from '@/components/AppFooter.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const router = useRouter()
 const appStore = useAppStore()
 const authStore = useAuthStore()
 
-const navItems = [
-  { to: '/bli-med', label: 'nav.join', icon: 'mdi-account-plus' },
-  { to: '/terminliste', label: 'nav.schedule', icon: 'mdi-calendar' },
-  { to: '/resultater', label: 'nav.results', icon: 'mdi-trophy' },
-  { to: '/festival', label: 'nav.festival', icon: 'mdi-party-popper' },
-  { to: '/lokaler', label: 'nav.rental', icon: 'mdi-home-city' },
-  { to: '/om-oss', label: 'nav.about', icon: 'mdi-information' },
-  { to: '/kontakt', label: 'nav.contact', icon: 'mdi-email' },
-]
+const navTree = computed(() => appStore.navTree)
 
-const allNavItems = [
-  { to: '/', label: 'nav.home', icon: 'mdi-home' },
-  ...navItems,
-  { to: '/nyheter', label: 'nav.news', icon: 'mdi-newspaper' },
-  { to: '/oppgave', label: 'nav.puzzle', icon: 'mdi-puzzle' },
-]
+function localizedTitle(item: NavItem): string {
+  if (locale.value === 'en' && item.title_en) return item.title_en
+  return item.title
+}
+
+function resolveLink(item: NavItem): string | { name: string } {
+  if (item.vue_route_name) return { name: item.vue_route_name }
+  return item.url_path
+}
+
+onMounted(() => {
+  appStore.loadNavigation()
+})
 </script>

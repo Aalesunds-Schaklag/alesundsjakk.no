@@ -9,6 +9,8 @@ from wagtail.api.v2.views import PagesAPIViewSet
 from wagtail.documents.api.v2.views import DocumentsAPIViewSet
 from wagtail.images.api.v2.views import ImagesAPIViewSet
 
+from home.api import navigation_view
+
 api_router = WagtailAPIRouter("wagtailapi")
 api_router.register_endpoint("pages", PagesAPIViewSet)
 api_router.register_endpoint("images", ImagesAPIViewSet)
@@ -17,6 +19,7 @@ api_router.register_endpoint("documents", DocumentsAPIViewSet)
 urlpatterns = [
     path("cms/django-admin/", admin.site.urls),
     path("cms/", include(wagtailadmin_urls)),
+    path("api/v2/navigation/", navigation_view, name="navigation"),
     path("api/v2/", api_router.urls),
     # Wagtail catch-all for redirects — must be last
     path("", include(wagtail_urls)),

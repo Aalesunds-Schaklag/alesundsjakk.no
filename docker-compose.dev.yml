@@ -26,6 +26,12 @@ services:
       - db
     command: python manage.py runserver 0.0.0.0:8001
 
+  playwright:
+    build: ./playwright
+    container_name: playwright-mcp
+    stdin_open: true
+    network_mode: host
+
 volumes:
   postgres-data:
   cms-static:

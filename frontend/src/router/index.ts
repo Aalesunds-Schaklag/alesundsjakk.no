@@ -18,6 +18,7 @@ const routes = [
       { path: 'oppgave', name: 'puzzle', component: () => import('@/views/PuzzleView.vue') },
       { path: 'logg-inn', name: 'login', component: () => import('@/views/LoginView.vue') },
       { path: 'auth/verify', name: 'auth-verify', component: () => import('@/views/LoginView.vue') },
+      { path: ':pathMatch(.*)*', name: 'wagtail-page', component: () => import('@/views/PageView.vue') },
     ],
   },
   {

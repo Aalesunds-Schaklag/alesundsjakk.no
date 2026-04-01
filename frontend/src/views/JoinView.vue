@@ -55,6 +55,7 @@
           </v-card-text>
         </v-card>
 
+        <!-- Membership fees from Wagtail -->
         <v-card class="mb-6">
           <v-card-item>
             <template v-slot:prepend>
@@ -62,8 +63,32 @@
             </template>
             <v-card-title>{{ t('join.membership') }}</v-card-title>
           </v-card-item>
-          <v-card-text class="text-body-1">
-            {{ t('join.membership_desc') }}
+          <v-card-text>
+            <p class="text-body-1 mb-4">{{ t('join.membership_desc') }}</p>
+            <v-table v-if="priceItems.length" density="compact">
+              <tbody>
+                <tr v-for="(item, i) in priceItems" :key="i">
+                  <td class="font-weight-medium">
+                    {{ lang === 'en' && item.category_en ? item.category_en : item.category_no }}
+                  </td>
+                  <td class="text-right font-weight-bold" style="white-space: nowrap;">
+                    {{ item.price_nok }} kr
+                  </td>
+                  <td class="text-medium-emphasis">
+                    {{ lang === 'en' && item.description_en ? item.description_en : item.description_no }}
+                  </td>
+                </tr>
+              </tbody>
+            </v-table>
+            <v-btn
+              variant="text"
+              color="primary"
+              to="/om-oss/kontingenter"
+              class="mt-2"
+            >
+              {{ lang === 'en' ? 'Full pricing details' : 'Fullstendig prisoversikt' }}
+              <v-icon end>mdi-arrow-right</v-icon>
+            </v-btn>
           </v-card-text>
         </v-card>
 
@@ -88,6 +113,19 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-const { t } = useI18n()
+import { useWagtail, type PriceItem } from '@/composables/useWagtail'
+
+const { t, locale } = useI18n()
+const lang = locale
+const { getPage } = useWagtail()
+const priceItems = ref<PriceItem[]>([])
+
+onMounted(async () => {
+  const kontingenter = await getPage('kontingenter')
+  if (kontingenter?.price_items) {
+    priceItems.value = kontingenter.price_items
+  }
+})
 </script>
